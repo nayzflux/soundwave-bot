@@ -1,0 +1,37 @@
+{
+  "name": "soundwave-bot",
+  "version": "1.0.0",
+  "description": "Music discord bot",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "tsc && node dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nayzflux/soundwave-bot.git"
+  },
+  "keywords": [
+    "music",
+    "bot",
+    "discord"
+  ],
+  "author": "NayZ",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/nayzflux/soundwave-bot/issues"
+  },
+  "homepage": "https://github.com/nayzflux/soundwave-bot#readme",
+  "devDependencies": {
+    "@types/node": "^18.15.13",
+    "dotenv": "^16.0.3",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "@discordjs/voice": "^0.16.0",
+    "discord.js": "^14.9.0",
+    "libsodium-wrappers": "^0.7.11",
+    "node-cmd": "^5.0.0",
+    "spotifydl-core": "^0.2.0",
+    "yt-search": "^2.10.4"
+  }
+}
