@@ -29,7 +29,7 @@ export const searchSpotifyPlaylist = async (url: string): Promise<MyPlaylist> =>
 export const downloadSpotifySong = async (song: MySong) => {
     console.log(`⏬ Downloading song ${song.title}...`);
 
-    // Si la musique n'a pas déjà été télécharger
+    // Si la musique n'a pas déjà été télécharger alors le faire
     if (!fs.existsSync(`${DOWNLOAD_PATH}${clearText(song.title)}.mp3`)) {
         const buffer = await spotify.downloadTrack(song.url);
         fs.writeFileSync(`${DOWNLOAD_PATH}${clearText(song.title)}.mp3`, buffer);
@@ -40,16 +40,22 @@ export const downloadSpotifySong = async (song: MySong) => {
 
 export const downloadSpotifyPlaylist = async (playlist: MyPlaylist) => {
     console.log(`⏬ Downloading playlist ${playlist.title}...`);
-
-    const buffers = await spotify.downloadPlaylist(playlist.url);
+    
+    const buffers = await spotify.downloadPlaylist(playlist.url); // obtenir la liste des buffers
     let i = 0;
-
+    
     for (const buffer of buffers) {
         const song = playlist.songs[i];
-
-        // Si la musique n'a pas déjà été télécharger
+        if (buffer.length === 0) { // ne sert à rien juste à débug 🤖
+            console.log(song.title);
+            console.log(typeof buffer);
+        }
+        
+        // Si la musique n'a pas déjà été télécharger alors le faires
         if (!fs.existsSync(`${DOWNLOAD_PATH}${clearText(song.title)}.mp3`)) {
             fs.writeFileSync(`${DOWNLOAD_PATH}${clearText(song.title)}.mp3`, buffer);
+        } else {
+            console.log("👌 Download skipped");
         }
 
         i++;

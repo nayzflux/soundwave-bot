@@ -23,6 +23,14 @@ export const searchYoutubeSong = async (query): Promise<MySong> => {
 }
 
 export const downloadYoutubeSog = (song: MySong) => {
-    ytdl(song.url, { quality: 'highestaudio', filter: 'audioonly'})
-        .pipe(fs.createWriteStream(`${DOWNLOAD_PATH}${clearText(song.title)}.mp3`));
+    console.log(`⏬ Downloading song ${song.title}...`);
+
+    // Si la musique n'a pas déjà été télécharger alors le faires
+    if (!fs.existsSync(`${DOWNLOAD_PATH}${clearText(song.title)}.mp3`)) {
+        const stream = ytdl(song.url, { quality: 'highestaudio', filter: 'audioonly' });
+        stream.pipe(fs.createWriteStream(`${DOWNLOAD_PATH}${clearText(song.title)}.mp3`));
+    }
+
+    console.log(`⏬ Download song ${song.title} completed!`);
+    return;
 }

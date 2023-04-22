@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+  bot:
+    image: nayzbysodium/soundwave-bot:latest
+    restart: on-failure
+    environment:
+      DISCORD_TOKEN: "secret"
+      SPOTIFY_ID: "secret"
+      SPOTIFY_SECRET: "secret"

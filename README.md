@@ -2,14 +2,16 @@
 SoundWave is a discord bot specialized in music
 ## Objective
 - Play any music from Spotify ✅
+- Play any album from Spotify ❌
 - Play any (public) Spotify playlist ✅
 - Play any music from YouTube ✅
 - search with YouTube ✅
 - playback file management: ⌛
-    - stop ❌
-    -pause ❌
-    - resume ❌
+    - stop ✅
+    -pause ✅
+    - resume ✅
     - play ✅
+    - queue ⌛
 - link with Spotify: ❌
     - playlist selection ❌
 - command slash ❌
