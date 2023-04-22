@@ -19,7 +19,7 @@ RUN apt-get install ffmpeg -y
 RUN apt-get install wget -y
 RUN wget https://github.com/nayzflux/spotifydl-core/archive/refs/heads/master.zip
 RUN apt-get install unzip -y
-RUN unzip master.zip -y
+RUN unzip master.zip
 RUN cd spotifydl-core-master
 RUN npm i typescript
 RUN npm run build
