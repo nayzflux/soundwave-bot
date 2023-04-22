@@ -27,6 +27,7 @@ RUN cd spotifydl-core-master && npm i typescript && npm run build && cp -r dist 
 # RUN cp -r dist ../node_modules/spotifydl-core/dist
 RUN ls
 RUN cd /app
+RUN tsc
 RUN ls
 
 CMD ["npm", "start"]
