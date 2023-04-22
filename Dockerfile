@@ -21,6 +21,7 @@ RUN wget https://github.com/nayzflux/spotifydl-core/archive/refs/heads/master.zi
 RUN apt-get install unzip -y
 RUN unzip master.zip
 RUN cd spotifydl-core-master
+RUN ls
 RUN npm i typescript
 RUN npm run build
 RUN cp dist ../node_modules/spotifydl-core/dist
