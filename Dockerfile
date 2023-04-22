@@ -4,6 +4,8 @@ WORKDIR /app
 
 COPY . .
 
+RUN ls
+
 # Mettre à jour npm
 RUN npm install -g npm@latest
 
@@ -27,7 +29,7 @@ RUN cd spotifydl-core-master && npm i typescript && npm run build && cp -r dist 
 # RUN cp -r dist ../node_modules/spotifydl-core/dist
 RUN ls
 RUN cd /app
-RUN tsc
+RUN npx tsc
 RUN ls
 
 CMD ["npm", "start"]
