@@ -21,14 +21,13 @@ RUN apt-get update -y
 RUN apt-get install ffmpeg -y
 
 # Patch le module spotify-dl
+# telecharher le zip
 RUN apt-get install wget -y
 RUN wget https://github.com/nayzflux/spotifydl-core/archive/refs/heads/master.zip
+# decompresser le zip
 RUN apt-get install unzip -y
 RUN unzip master.zip
-RUN cd spotifydl-core-master && npm i typescript && npm run build && cp -r dist ../node_modules/spotifydl-core/dist
-# RUN ls
-# RUN npm i typescript
-# RUN npm run build
-# RUN cp -r dist ../node_modules/spotifydl-core/dist
+# build spotifydl-core le remplacer celui du node_modules
+RUN cd spotifydl-core-master && npm i typescript && npm run build && cp -r dist ../node_modules/spotifydl-core
 
 CMD ["npm", "start"]
