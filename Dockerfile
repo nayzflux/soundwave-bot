@@ -11,7 +11,10 @@ RUN npm install -g npm@latest
 
 # Installer les modules
 RUN npm install
+
+# compiler le typescript
 RUN npm install typescript
+RUN npx tsc
 
 # Installer ffmpeg
 RUN apt-get update -y
@@ -27,9 +30,5 @@ RUN cd spotifydl-core-master && npm i typescript && npm run build && cp -r dist 
 # RUN npm i typescript
 # RUN npm run build
 # RUN cp -r dist ../node_modules/spotifydl-core/dist
-RUN ls
-RUN cd /app
-RUN npx tsc
-RUN ls
 
 CMD ["npm", "start"]
