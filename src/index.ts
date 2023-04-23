@@ -172,4 +172,7 @@ client.on('messageCreate', async (message) => {
 
 init(); // init music.ts
 
+// START DASHBOARD API
+import './dashboard/api/index';
+
 client.login(process.env.DISCORD_TOKEN);

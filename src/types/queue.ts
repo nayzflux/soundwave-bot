@@ -9,4 +9,5 @@ export default interface MyQueue {
     player: AudioPlayer;
     connection: VoiceConnection;
     resources: AudioResource[];
+    songs: MySong[]
 }

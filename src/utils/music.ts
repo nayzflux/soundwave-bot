@@ -80,7 +80,7 @@ export const play = (channel, song: MySong) => {
         console.log(`🆗 Audio resource created for ${song.title}`);
 
         // Créer la file de lecture
-        queues.set(channel.guildId, { player, connection, resources: [resource] });
+        queues.set(channel.guildId, { player, connection, resources: [resource], songs: [song] });
 
         // Lancer le lecteur
         player.play(resource);
@@ -107,6 +107,7 @@ export const play = (channel, song: MySong) => {
             // Jouer le prochain song
             const actualQueue: MyQueue = queues.get(channel.guildId);
             actualQueue.resources.shift();
+            actualQueue.songs.shift();
 
             console.log(`🗑️ Previous song removed from queue`);
 
@@ -126,6 +127,7 @@ export const play = (channel, song: MySong) => {
         // Charger la musique
         const resource: AudioResource = createAudioResource(`${DOWNLOAD_PATH}${clearText(song.title)}.mp3`);
         queue.resources.push(resource); // ajouter la musique à la file de lecture
+        queue.songs.push(song);
         console.log(`🆗 Audio resource created for ${song.title}`);
     }
 }
@@ -149,6 +151,7 @@ export const isPaused = (guildId: string): boolean => {
 export const skip = (guildId: string, amount: number): void => {
     const queue = queues.get(guildId);
     queue?.resources?.splice(1, amount - 1); // supprimer la prochaine musique jusqu'à la x ième musique
+    queue?.songs?.splice(1, amount - 1); // supprimer la prochaine musique jusqu'à la x ième musique
     queue?.player?.stop(); // arreter la lecture pour passer à la suivante
     console.log("⏭️ " + amount + " song(s) skipped");
 }
@@ -157,7 +160,7 @@ export const skip = (guildId: string, amount: number): void => {
 export const clear = (guildId: string): void => {
     const queue = queues.get(guildId);
     queue?.resources?.splice(1, queues.get(guildId)?.resources?.length - 1); // supprimer de la prochaine à la dernière musique
-
+    queue?.songs?.splice(1, queues.get(guildId)?.songs?.length - 1); // supprimer de la prochaine à la dernière musique
     console.log("⏭️ Queue cleared");
 }
 
