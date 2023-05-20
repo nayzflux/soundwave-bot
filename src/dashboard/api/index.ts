@@ -45,13 +45,14 @@ app.get('/api/spotify/callback', isAuth, async (req, res) => {
     console.log(credentials)
 
     if (!credentials?.access_token) {
-        //res.redirect("/api/spotify/login");
+        res.redirect("/api/spotify/login");
         return;
     }
 
     await User.updateOne({id: self.id}, {spotifyCredentials: credentials});
 
-    res.status(200).json({message: 'ok spotify credentials'})
+    res.redirect(process.env.CLIENT_URL)
+    //res.status(200).json({message: 'ok spotify credentials'})
 });
 
 app.get('/api/spotify/playlists', isAuth, async (req, res) => {
@@ -92,13 +93,13 @@ app.get('/api/auth/callback', async (req, res) => {
         const user = await User.findOneAndUpdate({id}, { email, username, credentials }, {new: true});
         const token = signToken(user);
         console.log(`Dashboard API: User updated`, user);
-        res.status(200).cookie('jwt', token, {maxAge: 30 * 24 * 60 * 60 * 1000}).redirect('http://localhost:3000')
+        res.status(200).cookie('jwt', token, {maxAge: 30 * 24 * 60 * 60 * 1000}).redirect(process.env.CLIENT_URL)
         return;
     } else {
         const user = await User.create({ id, email, username, credentials });
         const token = signToken(user);
         console.log(`Dashboard API: User created`, user);
-        res.cookie('jwt', token, {maxAge: 30 * 24 * 60 * 60 * 1000}).redirect('http://localhost:3000')
+        res.cookie('jwt', token, {maxAge: 30 * 24 * 60 * 60 * 1000}).redirect(process.env.CLIENT_URL)
         return;
     }
 });
