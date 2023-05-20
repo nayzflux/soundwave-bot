@@ -17,6 +17,13 @@ services:
       SPOTIFY_OAUTH_URL: "secret"
       SPOTIFY_REDIRECT_URL: "secret"
       CLIENT_URL: "secret"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.soundwave-api.rule=Host(`api.soundwave.nayz.fr`)
+      - traefik.http.routers.soundwave-api.entrypoints=websecure
+      - traefik.http.routers.soundwave-api.service=csoundwave-api
+      - traefik.http.services.soundwave-api.loadbalancer.server.port=5000
+      - traefik.http.routers.soundwave-api.tls.certresolver=production
     expose:
       - 5000
   dashboard:
@@ -24,3 +31,13 @@ services:
     restart: on-failure
     expose:
       - 3000
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.soundwave-dashboard.rule=Host(`dashboard.soundwave.nayz.fr`)
+      - traefik.http.routers.soundwave-dashboard.entrypoints=websecure
+      - traefik.http.routers.soundwave-dashboard.service=csoundwave-dashboard
+      - traefik.http.services.soundwave-dashboard.loadbalancer.server.port=3000
+      - traefik.http.routers.soundwave-dashboard.tls.certresolver=production
+
+networks:
+  webgateway:
