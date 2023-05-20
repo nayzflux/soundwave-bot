@@ -15,7 +15,7 @@ SoundWave is a discord bot specialized in music
 - link with Spotify: ❌
     - playlist selection ❌
 - command slash ❌
-- Dashboard web ❌
+- Dashboard web ✅ (open beta)
 ## Contributions
 All contributions welcome.
 - If you have developed a new feature, do not hesitate to open a pull request.
