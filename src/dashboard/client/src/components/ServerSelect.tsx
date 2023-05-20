@@ -4,16 +4,19 @@ import {useEffect, useState} from "react";
 import {useRecoilState} from "recoil";
 import guildState from "@/atoms/guildAtom";
 import {fetchUserGuilds} from "@/utils/api";
+import isInVoiceChannelState from "@/atoms/isInVoiceChannelAtom";
 
 const ServerSelect = () => {
     const [guilds, setGuilds] = useState<Guild[]>([]);
     const [guild, setGuild] = useRecoilState(guildState);
+    const [isInVoiceChannel, setIsInVoiceChannel] = useRecoilState(isInVoiceChannelState);
 
     useEffect(() => {
         fetchUserGuilds().then(data => {
             if (data[0]) {
                 setGuild(data[0]);
                 setGuilds(data);
+                setIsInVoiceChannel(true)
             }
         })
     }, [])

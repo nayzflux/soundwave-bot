@@ -21,8 +21,6 @@ export const isAuth = async (req, res, next) => {
     // Récupérer l'utilisateur connecter dans la base de donné
     const self = await User.findOne({ id: decoded.id });
 
-    console.log(self.username)
-
     // Vérifier si l'utilisateur n'a pas été supprimer
     if (!self) return res.status(404).json({ message: "L'utilisateur n'existe pas" });
 

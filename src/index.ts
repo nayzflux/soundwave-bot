@@ -3,8 +3,8 @@
  * Fichier racine du projet
  */
 
-//import * as dotenv from 'dotenv' // only in dev
-//dotenv.config({ path: '.env' })
+import * as dotenv from 'dotenv' // only in dev
+dotenv.config({ path: '.env' })
 
 import { ChannelType, Client } from 'discord.js';
 import { clear, getQueue, init, isPaused, isPlaying, play, skip, stop, togglePause } from './utils/music';

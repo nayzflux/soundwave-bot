@@ -67,7 +67,7 @@ const Search = () => {
                         channel but this message appear?
                     </p>
 
-                    <button className="hover:shadow-2xl bg-blue-600 hover:shadow-blue-500 px-3 py-2 rounded-lg font-semibold active:scale-95 transition-all ease-out duration-700" onClick={() => router.push('http://localhost:5000/api/auth/login')}>Login With Discord</button>
+                    <button className="hover:shadow-2xl bg-blue-600 hover:shadow-blue-500 px-3 py-2 rounded-lg font-semibold active:scale-95 transition-all ease-out duration-700" onClick={() => router.push((process.env.NEXT_PUBLIC_API_URL || 'https://api.soundwave.nayz.fr/api') + '/auth/login')}>Login With Discord</button>
                 </div>
             }
         </div>
