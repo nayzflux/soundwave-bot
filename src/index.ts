@@ -3,14 +3,13 @@
  * Fichier racine du projet
  */
 
-import * as dotenv from 'dotenv' // only in dev
-dotenv.config({ path: '.env' })
+//import * as dotenv from 'dotenv' // only in dev
+//dotenv.config({ path: '.env' })
 
 import { ChannelType, Client } from 'discord.js';
 import { clear, getQueue, init, isPaused, isPlaying, play, skip, stop, togglePause } from './utils/music';
 import { downloadSpotifyPlaylist, downloadSpotifySong, searchSpotifyPlaylist, searchSpotifySong } from './utils/spotify';
 import { downloadYoutubeSog, searchYoutubeSong } from './utils/youtube';
-import { isNumberObject } from 'util/types';
 
 const client = new Client({
     intents: 3276799
