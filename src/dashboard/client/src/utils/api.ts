@@ -1,7 +1,7 @@
 import axios from "axios";
 import {SpotifyPlaylist} from "@/types/spotifyPlaylist";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.soundwave.nayz.fr/api/"
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.soundwave.nayz.fr/api"
 
 export const fetchGuildQueue = async (guildId: string) => {
     console.log(`Fetching guild ${guildId}...`)
