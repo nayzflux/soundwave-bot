@@ -30,6 +30,7 @@ const Search = () => {
             }
 
             if (!guild?.id) {
+                setIsOnVoiceChannel(false);
                 return setResults([])
             }
 

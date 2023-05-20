@@ -17,7 +17,9 @@ const Sidebar = () => {
         if (!guild) return;
 
         fetchGuildQueue(guild.id).then((response) => {
-            if (!response) return setQueue({songs: [], isPlaying: false});
+            if (!response) {
+                return setQueue({songs: [], isPlaying: false});
+            }
             // @ts-ignore
             setQueue({isPlaying: response?.data?.isPlaying, songs: response?.data?.songs?.map((song) => ({name: song.name, durationMs: song.durationMs, coverUrl: song.coverUrl, authors: song.authors}))})
         });
