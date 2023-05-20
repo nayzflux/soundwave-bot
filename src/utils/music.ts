@@ -6,6 +6,7 @@
 import { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, AudioResource, entersState, VoiceConnectionStatus, AudioPlayer } from '@discordjs/voice';
 import MyQueue from '../types/queue';
 import fs from 'fs';
+import {onClear, onPause, onPlay, onSkip, onStop} from "../dashboard/api";
 
 // Ou les fichiers seront télécharger
 const DOWNLOAD_PATH = `./temp/musics/`;
@@ -34,6 +35,8 @@ export const stop = (guildId: string) => {
     player.stop();
 
     queues.set(guildId, null);
+
+    onStop(guildId);
 
     console.log(`⏹️ Player stopped`);
 }
@@ -80,10 +83,11 @@ export const play = (channel, song: MySong) => {
         console.log(`🆗 Audio resource created for ${song.title}`);
 
         // Créer la file de lecture
-        queues.set(channel.guildId, { player, connection, resources: [resource], songs: [song] });
+        queues.set(channel.guildId, { player, connection, resources: [resource], songs: [song], isPlaying: true });
 
         // Lancer le lecteur
         player.play(resource);
+        onPlay(channel.guildId, queues.get(channel.guildId))
 
         console.log(`🎵 Playing on ${channel.name}...`);
 
@@ -114,6 +118,7 @@ export const play = (channel, song: MySong) => {
             // Si il reste des musiques les jouers sinon se déconnecter
             if (actualQueue.resources?.length >= 1) {
                 player.play(actualQueue.resources[0]); // jouer la ressource
+                onPlay(channel.guildId, actualQueue)
                 // isIdle = false
             } else {
                 subscription.unsubscribe();
@@ -129,6 +134,7 @@ export const play = (channel, song: MySong) => {
         queue.resources.push(resource); // ajouter la musique à la file de lecture
         queue.songs.push(song);
         console.log(`🆗 Audio resource created for ${song.title}`);
+        onPlay(channel.guildId, queue)
     }
 }
 
@@ -153,6 +159,9 @@ export const skip = (guildId: string, amount: number): void => {
     queue?.resources?.splice(1, amount - 1); // supprimer la prochaine musique jusqu'à la x ième musique
     queue?.songs?.splice(1, amount - 1); // supprimer la prochaine musique jusqu'à la x ième musique
     queue?.player?.stop(); // arreter la lecture pour passer à la suivante
+    if (queue) {
+        onSkip(guildId, queue)
+    }
     console.log("⏭️ " + amount + " song(s) skipped");
 }
 
@@ -161,6 +170,9 @@ export const clear = (guildId: string): void => {
     const queue = queues.get(guildId);
     queue?.resources?.splice(1, queues.get(guildId)?.resources?.length - 1); // supprimer de la prochaine à la dernière musique
     queue?.songs?.splice(1, queues.get(guildId)?.songs?.length - 1); // supprimer de la prochaine à la dernière musique
+    if (queue) {
+        onClear(guildId, queue);
+    }
     console.log("⏭️ Queue cleared");
 }
 
@@ -175,9 +187,18 @@ export const togglePause = (guildId: string): void => {
     const queue = queues.get(guildId);
     // si le lecteur n'est pas en pause
     if (!isPaused(guildId)) {
+        if (queue) {
+            queue.isPlaying = false;
+            onPause(guildId, queue)
+        }
         queue?.player?.pause(); // mettre en pause la lecture
         console.log("⏯️ Player paused");
+
     } else {
+        if (queue) {
+            queue.isPlaying = true;
+            onPlay(guildId, queue)
+        }
         queue?.player?.unpause(); // reprendre la lecture
         console.log("⏯️ Player unpaused");
     }

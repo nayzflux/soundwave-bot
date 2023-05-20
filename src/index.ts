@@ -170,6 +170,23 @@ client.on('messageCreate', async (message) => {
     }
 });
 
+export const getVoiceChannel = async (memberId, guildId) => {
+    try {
+        const guild = await client.guilds.fetch(guildId);
+        if(!guild) return null;
+
+        const member = await guild.members.fetch(memberId);
+        if(!member) return null;
+
+        if(!member.voice?.channel) return null;
+
+        return member.voice.channel;
+    } catch (err) {
+        console.log(err)
+        return null;
+    }
+}
+
 init(); // init music.ts
 
 // START DASHBOARD API

@@ -1,17 +1,40 @@
 import User from "../models/user";
+import {getCurrentUser, getCurrentUserConnections, getMutualGuilds} from "../utils/discord";
+import {verifyToken} from "../index";
 
-module.exports.isAuth = async (req, res, next) => {
-    const session = req.session;
+/**
+ * Gérer l'authentification
+ * @param {Express.Request} req
+ * @param {Express.Response} res
+ * @param {} next
+ */
+export const isAuth = async (req, res, next) => {
+    const token = req.cookies?.jwt;
 
-    // si l'utilisateur n'est pas authentifier ou que l'utilisateur n'existe plus
-    if (!session.authenticated) return res.status(401).json({ message: "Auth required!" });
-    if (!session.user || !session.user._id) return res.status(401).json({ message: "Auth required!" });
-    if (!await User.exists({ _id: session.user._id })) return res.status(401).json({ message: "Auth required!" });
+    // Si l'utilisateur n'a pas de token
+    if (!token) return res.status(401).json({ message: "Authentification requise" });
 
-    const user = await User.findOne({ _id: session.user._id });
+    // Décoder le token et verifié sa validité
+    const decoded = verifyToken(token);
+    if (!decoded) return res.status(403).json({ message: "Authentification invalide" });
 
-    res.locals.sender = user;
+    // Récupérer l'utilisateur connecter dans la base de donné
+    const self = await User.findOne({ id: decoded.id });
 
-    console.log(`Authentifié en tant que ${user.email}.`);
+    console.log(self.username)
+
+    // Vérifier si l'utilisateur n'a pas été supprimer
+    if (!self) return res.status(404).json({ message: "L'utilisateur n'existe pas" });
+
+    const discordUser = await getCurrentUser(self.credentials.access_token, self.id);
+
+    const mutuals = await getMutualGuilds(self.credentials.access_token, self.id);
+
+    // Stockage des informations d'authentification dans l'objet req pour les fonctions suivantes
+    req.self = self;
+    req.discordUser = discordUser;
+    req.mutuals = mutuals;
+
+    console.log(`Authentifié en tant que ${self.username}`);
     return next();
 }

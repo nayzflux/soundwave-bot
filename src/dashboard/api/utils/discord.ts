@@ -1,5 +1,7 @@
 import axios from "axios"
-import { access } from "fs";
+
+const users = new Map();
+const guilds = new Map();
 
 interface MyCredentials {
     access_token: string,
@@ -35,7 +37,11 @@ export const getCredentials = async (code: string): Promise<MyCredentials> => {
     }
 }
 
-export const getCurrentUser = async (access_token: string) => {
+export const getCurrentUser = async (access_token: string, userId: string) => {
+    if (users.has(userId)) {
+        return users.get(userId)
+    }
+
     try {
         const response = await axios.request({
             method: 'get',
@@ -45,6 +51,12 @@ export const getCurrentUser = async (access_token: string) => {
             }
         });
 
+        // Mettre en cache pendant 10 minutes
+        users.set(userId, response.data);
+        setTimeout(() => {
+            users.delete(userId)
+        }, 10 * 60 * 1000);
+
         return response.data;
     } catch (err) {
         console.log(err.response.data);
@@ -52,11 +64,11 @@ export const getCurrentUser = async (access_token: string) => {
     }
 }
 
-export const getCurrentGuilds = async (access_token: string) => {
-    try {
+export const getCurrentUserConnections = async (access_token: string) => {
+    /**try {
         const response = await axios.request({
             method: 'get',
-            url: `https://discord.com/api/users/@me/guilds`,
+            url: `https://discord.com/api/users/@me/connections`,
             headers: {
                 'Authorization': `Bearer ${access_token}`
             }
@@ -66,10 +78,49 @@ export const getCurrentGuilds = async (access_token: string) => {
     } catch (err) {
         console.log(err.response.data);
         return null;
+    }**/
+    return null;
+}
+
+export const getCurrentGuilds = async (access_token: string, userId: string) => {
+    if (guilds.has(userId)) {
+        console.log("Guild get from cache")
+        return guilds.get(userId)
+    }
+
+    try {
+        const response = await axios.request({
+            method: 'get',
+            url: `https://discord.com/api/users/@me/guilds`,
+            headers: {
+                'Authorization': `Bearer ${access_token}`
+            }
+        });
+
+        // Mettre en cache pendant 30 secondes
+        guilds.set(userId, response.data);
+        setTimeout(() => {
+            guilds.delete(userId)
+        }, 60 * 1000);
+
+        return response.data;
+    } catch (err) {
+        if (err.response.data?.retry_after) {
+            console.log(`Rate limit`);
+            sleep(Math.ceil(err.response.data?.retry_after) * 1000)
+            return getBotGuilds();
+        } else {
+            console.log(err.response.data);
+            return null;
+        }
     }
 }
 
 export const getBotGuilds = async () => {
+    if (guilds.has("bot")) {
+        return guilds.get("bot")
+    }
+
     try {
         const response = await axios.request({
             method: 'get',
@@ -79,16 +130,36 @@ export const getBotGuilds = async () => {
             }
         });
 
+        // Mettre en cache pendant 30 secondes
+        guilds.set('bot', response.data);
+        setTimeout(() => {
+            guilds.delete('bot')
+        }, 60 * 1000);
+
         return response.data;
     } catch (err) {
-        console.log(err.response.data);
-        return null;
+        if (err.response.data?.retry_after) {
+            console.log(`Rate limit`);
+            sleep(Math.ceil(err.response.data?.retry_after) * 1000)
+            return getBotGuilds();
+        } else {
+            console.log(err.response.data);
+            return null;
+        }
     }
 }
 
-export const getMutualGuilds = async (access_token: string) => {
+function sleep(milliseconds) {
+    const date = Date.now();
+    let currentDate = null;
+    do {
+        currentDate = Date.now();
+    } while (currentDate - date < milliseconds);
+}
+
+export const getMutualGuilds = async (access_token: string, userId: string) => {
     const bots = await getBotGuilds();
-    const users = await getCurrentGuilds(access_token);
+    const users = await getCurrentGuilds(access_token, userId);
 
     if (!users) {
         return null;
@@ -110,3 +181,8 @@ export const getMutualGuilds = async (access_token: string) => {
 export const refreshToken = async () => {
 
 }
+
+/**setInterval(() => {
+    console.log(users);
+    console.log(guilds);
+}, 1000)**/

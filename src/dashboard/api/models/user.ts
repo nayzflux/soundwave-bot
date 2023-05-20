@@ -9,7 +9,17 @@ const userSchema = new Schema({
         refresh_token: String,
         expires_in: String,
         updated_at: String,
+    },
+    // Account Spotify
+    spotifyCredentials: {
+        access_token: String,
+        token_type: String,
+        scope: String,
+        expires_at: Number,
+        expires_in: Number,
+        refresh_token: String,
     }
 });
+
 const User = model("User", userSchema, "users");
 export default User;

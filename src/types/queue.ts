@@ -10,4 +10,5 @@ export default interface MyQueue {
     connection: VoiceConnection;
     resources: AudioResource[];
     songs: MySong[]
+    isPlaying: boolean
 }

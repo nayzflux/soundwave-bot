@@ -18,12 +18,12 @@ const DOWNLOAD_PATH = `./temp/musics/`;
 export const searchSpotifySong = async (url: string): Promise<MySong> => {
     const track = await spotify.getTrack(url);
     if (!track) return null;
-    return { url: url, title: track.name, authors: track.artists.toString() };
+    return { url: url, title: track.name, authors: track.artists.toString(), name: track.name, coverUrl: track.cover_url, durationMs: 0 };
 }
 
 export const searchSpotifyPlaylist = async (url: string): Promise<MyPlaylist> => {
     const { name, total_tracks, tracks } = await spotify.getTracksFromPlaylist(url);
-    return { url: url, title: name, totalSongs: total_tracks, songs: tracks.map(track => ({ url: null, title: track.name, authors: track.artists.toString() })) };
+    return { url: url, title: name, totalSongs: total_tracks, songs: tracks.map(track => ({ url: null, title: track.name, authors: track.artists.toString(), name: track.name, coverUrl: track.cover_url, durationMs: 0 })) };
 }
 
 export const downloadSpotifySong = async (song: MySong) => {

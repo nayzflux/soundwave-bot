@@ -18,8 +18,9 @@ export const searchYoutubeSong = async (query): Promise<MySong> => {
     if (!video) {
         return null;
     }
+    console.log(video.thumbnail)
 
-    return { url: video.url, title: video.title, authors: video.author.name }
+    return { url: video.url, title: video.title, authors: video.author.name, name: video.title, coverUrl: video.thumbnail, durationMs: convertToMs(video.duration.timestamp) }
 }
 
 export const downloadYoutubeSog = (song: MySong) => {
@@ -33,4 +34,14 @@ export const downloadYoutubeSog = (song: MySong) => {
 
     console.log(`⏬ Download song ${song.title} completed!`);
     return;
+}
+
+function convertToMs(time: string): number {
+    const [hours, minutes, seconds] = time.split(':').map(Number);
+
+    if (isNaN(hours)) {
+        return minutes * 60000 + seconds * 1000;
+    }
+
+    return hours * 3600000 + minutes * 60000 + seconds * 1000;
 }
