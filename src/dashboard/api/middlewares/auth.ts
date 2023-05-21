@@ -11,7 +11,7 @@ import {verifyToken} from "../index";
 export const isAuth = async (req, res, next) => {
     const token = req.cookies?.jwt;
 
-    console.log(token)
+    console.log(`Dashboard API - Authentication...`);
 
     // Si l'utilisateur n'a pas de token
     if (!token) return res.status(401).json({ message: "Authentification requise" });
@@ -32,6 +32,6 @@ export const isAuth = async (req, res, next) => {
     req.self = self;
     //req.discordUser = discordUser;
 
-    console.log(`Authentifié en tant que ${self.username}`);
+    console.log(`Dashboard API - Logged as ${self.username}`);
     return next();
 }

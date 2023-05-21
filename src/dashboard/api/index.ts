@@ -21,9 +21,26 @@ import {getVoiceChannel} from "../../index";
 import {getCurrentSpotifyUserPlaylists, getSpotifyCredentials, SpotifyCredentials} from "./utils/spotify";
 import {resolveMutualGuilds} from "./middlewares/guild";
 
+import rateLimit from 'express-rate-limit'
+
+
+
 const app = express();
 
 const server = http.createServer(app);
+
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 50, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers,
+    message: "You are being rate limited retry in 15 minutes",
+})
+
+app.set('trust proxy', 1)
+app.get('/ip', (request, response) => response.send(request.ip))
+
+app.use(limiter)
 
 app.use(cors({origin: process.env.CLIENT_URL, credentials: true}))
 
@@ -32,6 +49,7 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded());
 
 app.get('/api/spotify/login', isAuth, (req, res) => {
+    console.log("Dashboard API - Redirect to Spotify oauth url");
     res.redirect(process.env.SPOTIFY_OAUTH_URL);
 });
 
@@ -40,7 +58,8 @@ app.get('/api/spotify/callback', isAuth, async (req, res) => {
     // @ts-ignore
     const self = req.self;
 
-    console.log("Spotify Code granted - " + code);
+    console.log("Dashboard API - Spotify code granted");
+
     const credentials: SpotifyCredentials = await getSpotifyCredentials(code.toString());
 
     if (!credentials?.access_token) {
@@ -49,6 +68,7 @@ app.get('/api/spotify/callback', isAuth, async (req, res) => {
     }
 
     await User.updateOne({id: self.id}, {spotifyCredentials: credentials});
+    console.log(`Dashboard API - User updated`);
 
     res.redirect(process.env.CLIENT_URL)
     //res.status(200).json({message: 'ok spotify credentials'})
@@ -63,13 +83,16 @@ app.get('/api/spotify/playlists', isAuth, async (req, res) => {
 });
 
 app.get('/api/auth/login', (req, res) => {
+    console.log("Dashboard API - Redirect to Discord oauth url");
     res.redirect(process.env.DISCORD_OAUTH_URL);
 });
 
 
 app.get('/api/auth/callback', async (req, res) => {
     const { code } = req.query;
-    console.log("Dashboard API: Code granted - " + code);
+
+    console.log("Dashboard API - Discord code granted");
+
     const credentials = await getCredentials(code.toString());
 
     if (!credentials?.access_token) {
@@ -91,13 +114,13 @@ app.get('/api/auth/callback', async (req, res) => {
     if (await User.exists({ id })) {
         const user = await User.findOneAndUpdate({id}, { email, username, credentials }, {new: true});
         const token = signToken(user);
-        console.log(`Dashboard API: User updated`);
+        console.log(`Dashboard API - User updated`);
         res.status(200).cookie('jwt', token, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax', secure: true}).redirect(process.env.CLIENT_URL)
         return;
     } else {
         const user = await User.create({ id, email, username, credentials });
         const token = signToken(user);
-        console.log(`Dashboard API: User created`);
+        console.log(`Dashboard API - User created`);
         res.cookie('jwt', token, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax', secure: true}).redirect(process.env.CLIENT_URL)
         return;
     }
@@ -106,6 +129,7 @@ app.get('/api/auth/callback', async (req, res) => {
 function signToken(user) {
     try {
         const token = jwt.sign({id: user.id}, process.env.JWT_SECRET, {expiresIn: '30d'});
+        console.log(`Dashboard API - Token signed`);
         return token;
     } catch (err) {
         console.log(err);
@@ -116,6 +140,7 @@ function signToken(user) {
 export const verifyToken = (token) => {
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log(`Dashboard API - Token decoded`);
         return decoded;
     } catch (err) {
         return null;

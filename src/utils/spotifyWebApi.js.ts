@@ -9,7 +9,6 @@ const spotifyApi = new SpotifyWebApi({
 // Get an access token and 'save' it using a setter
 spotifyApi.clientCredentialsGrant().then(
     function(data) {
-        console.log('The access token is ' + data.body['access_token']);
         spotifyApi.setAccessToken(data.body['access_token']);
     },
     function(err) {
@@ -18,7 +17,6 @@ spotifyApi.clientCredentialsGrant().then(
 );
 
 export const search = async (query) => {
-    console.log(query)
     const data = await spotifyApi.searchTracks(query)
     const items = data.body.tracks.items;
     return items;
