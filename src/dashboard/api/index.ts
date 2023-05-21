@@ -22,6 +22,7 @@ import {getCurrentSpotifyUserPlaylists, getSpotifyCredentials, SpotifyCredential
 import {resolveMutualGuilds} from "./middlewares/guild";
 
 import rateLimit from 'express-rate-limit'
+import helmet from "helmet";
 
 
 
@@ -37,6 +38,9 @@ const limiter = rateLimit({
     message: "You are being rate limited retry in 15 minutes",
 })
 
+// Use Helmet!
+app.use(helmet());
+
 app.set('trust proxy', 1)
 app.get('/ip', (request, response) => response.send(request.ip))
 
@@ -46,7 +50,7 @@ app.use(cors({origin: process.env.CLIENT_URL, credentials: true}))
 
 app.use(cookieParser())
 app.use(bodyParser.json())
-app.use(bodyParser.urlencoded());
+app.use(bodyParser.urlencoded({extended: true}));
 
 app.get('/api/spotify/login', isAuth, (req, res) => {
     console.log("Dashboard API - Redirect to Spotify oauth url");
