@@ -19,6 +19,7 @@ import {isAuth} from "./middlewares/auth";
 import cookieParser from 'cookie-parser'
 import {getVoiceChannel} from "../../index";
 import {getCurrentSpotifyUserPlaylists, getSpotifyCredentials, SpotifyCredentials} from "./utils/spotify";
+import {resolveMutualGuilds} from "./middlewares/guild";
 
 const app = express();
 
@@ -41,8 +42,6 @@ app.get('/api/spotify/callback', isAuth, async (req, res) => {
 
     console.log("Spotify Code granted - " + code);
     const credentials: SpotifyCredentials = await getSpotifyCredentials(code.toString());
-
-    console.log(credentials)
 
     if (!credentials?.access_token) {
         res.redirect("/api/spotify/login");
@@ -92,14 +91,14 @@ app.get('/api/auth/callback', async (req, res) => {
     if (await User.exists({ id })) {
         const user = await User.findOneAndUpdate({id}, { email, username, credentials }, {new: true});
         const token = signToken(user);
-        console.log(`Dashboard API: User updated`, user);
-        res.status(200).cookie('jwt', token, {maxAge: 30 * 24 * 60 * 60 * 1000}).redirect(process.env.CLIENT_URL)
+        console.log(`Dashboard API: User updated`);
+        res.status(200).cookie('jwt', token, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax', secure: true}).redirect(process.env.CLIENT_URL)
         return;
     } else {
         const user = await User.create({ id, email, username, credentials });
         const token = signToken(user);
-        console.log(`Dashboard API: User created`, user);
-        res.cookie('jwt', token, {maxAge: 30 * 24 * 60 * 60 * 1000}).redirect(process.env.CLIENT_URL)
+        console.log(`Dashboard API: User created`);
+        res.cookie('jwt', token, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax', secure: true}).redirect(process.env.CLIENT_URL)
         return;
     }
 });
@@ -124,22 +123,19 @@ export const verifyToken = (token) => {
 }
 
 // Get All User Accessable Guild
-app.get('/api/guilds', isAuth, async (req, res) => {
+app.get('/api/guilds', isAuth, resolveMutualGuilds, async (req, res) => {
     // @ts-ignore
     const self = req.self;
     // @ts-ignore
     const mutuals = req.mutuals;
 
-    if (!mutuals) {
-        res.redirect("/api/auth/login");
-        return;
-    }
+    if (mutuals.length === 0) return res.status(404).json({success: false, code: 404});
 
     return res.json(mutuals);
 });
 
 // Get Guild queue
-app.get('/api/guilds/:guild_id/queue', isAuth, async (req, res) => {
+app.get('/api/guilds/:guild_id/queue', isAuth, resolveMutualGuilds, async (req, res) => {
     const { guild_id } = req.params;
 
     // @ts-ignore
@@ -163,7 +159,7 @@ app.get('/api/guilds/:guild_id/queue', isAuth, async (req, res) => {
 });
 
 // Search song
-app.get('/api/guilds/:guildId/search', isAuth, async (req, res) => {
+app.get('/api/guilds/:guildId/search', isAuth, resolveMutualGuilds, async (req, res) => {
     const { q } = req.query;
     const {guildId} = req.params;
 
@@ -173,16 +169,13 @@ app.get('/api/guilds/:guildId/search', isAuth, async (req, res) => {
     const mutuals = req.mutuals;
     if (!mutuals.map(g => g.id).includes(guildId)) return res.status(403).json({ message: "Not allowed : You're not on this server" });
 
-    // @ts-ignore
-    const discordUser = req.discordUser;
+    const voiceChannel = await getVoiceChannel(self.id, guildId);
 
-    const voiceChannel = await getVoiceChannel(discordUser.id, guildId);
-
-    if (!q || q === '') return res.status(200).json({songs: [], inVoiceChannel: (!!voiceChannel)});
+    if (!voiceChannel) return res.status(400).json({success: false, code: 400, message: "You're not on voice channel"});
 
     const songs = await search(q.toString());
 
-    res.status(200).json({songs, inVoiceChannel: (!!voiceChannel)});
+    res.status(200).json(songs);
     return;
 });
 
@@ -280,7 +273,7 @@ function getCookie(cookie, cName) {
 
 // Handle auth
 io.use(async (socket, next) => {
-    console.log("[WS] Auth...")
+    console.log("WS: Authentication...")
     const token = getCookie(socket.handshake.headers.cookie, "jwt"); // check if token in header
 
     // Si l'utilisateur n'a pas de token
@@ -293,31 +286,26 @@ io.use(async (socket, next) => {
     // Récupérer l'utilisateur connecter dans la base de donné
     const self = await User.findOne({ id: decoded.id });
 
-    console.log(self.username)
-
     // Vérifier si l'utilisateur n'a pas été supprimer
     if (!self) return next(new Error("Authentification requise"));
 
-    const discordUser = await getCurrentUser(self.credentials.access_token, self.id);
-
     // Stockage des informations d'authentification dans l'objet req pour les fonctions suivantes
     socket.self = self;
-    socket.discordUser = discordUser;
 
-    console.log(`Authentifié en tant que ${self.username}`);
+    console.log(`WS: Authentifié en tant que ${self.username}`);
     return next();
 });
 
 io.on('connection', (socket) => {
-    console.log(`${socket.discordUser.username} connected`)
+    console.log(`${socket.self.username} connected`)
 
     socket.on("disconnect", () => {
-        console.log(`${socket.discordUser.username} disconnected`)
+        console.log(`${socket.self.username} disconnected`)
     });
 
     socket.on("stop", async (guildId) => {
         console.log("WS: stop requested")
-        const voiceChannel = await getVoiceChannel(socket.discordUser.id, guildId);
+        const voiceChannel = await getVoiceChannel(socket.self.id, guildId);
 
         if (!voiceChannel) return;
         stop(guildId)
@@ -325,7 +313,7 @@ io.on('connection', (socket) => {
 
     socket.on("play", async (guildId) => {
         console.log("WS: play requested")
-        const voiceChannel = await getVoiceChannel(socket.discordUser.id, guildId);
+        const voiceChannel = await getVoiceChannel(socket.self.id, guildId);
 
         if (!voiceChannel) return;
         togglePause(guildId)
@@ -333,7 +321,7 @@ io.on('connection', (socket) => {
 
     socket.on("pause", async (guildId) => {
         console.log("WS: pause requested")
-        const voiceChannel = await getVoiceChannel(socket.discordUser.id, guildId);
+        const voiceChannel = await getVoiceChannel(socket.self.id, guildId);
 
         if (!voiceChannel) return;
         togglePause(guildId)
@@ -341,7 +329,7 @@ io.on('connection', (socket) => {
 
     socket.on("skip", async (guildId) => {
         console.log("WS: skip requested")
-        const voiceChannel = await getVoiceChannel(socket.discordUser.id, guildId);
+        const voiceChannel = await getVoiceChannel(socket.self.id, guildId);
 
         if (!voiceChannel) return;
         skip(guildId, 1)
@@ -349,7 +337,7 @@ io.on('connection', (socket) => {
 
     socket.on("clear", async (guildId) => {
         console.log("WS: clear requested")
-        const voiceChannel = await getVoiceChannel(socket.discordUser.id, guildId);
+        const voiceChannel = await getVoiceChannel(socket.self.id, guildId);
 
         if (!voiceChannel) return;
         clear(guildId)
@@ -359,7 +347,7 @@ io.on('connection', (socket) => {
     socket.on('add_song', async (guildId, songUrl) => {
         console.log("WS: add song requested")
 
-        const voiceChannel = await getVoiceChannel(socket.discordUser.id, guildId);
+        const voiceChannel = await getVoiceChannel(socket.self.id, guildId);
 
         if (!voiceChannel) return;
 
@@ -371,7 +359,7 @@ io.on('connection', (socket) => {
     socket.on('add_playlist', async (guildId, playlistUrl) => {
         console.log("WS: add playlist requested")
 
-        const voiceChannel = await getVoiceChannel(socket.discordUser.id, guildId);
+        const voiceChannel = await getVoiceChannel(socket.self.id, guildId);
 
         if (!voiceChannel) return;
 

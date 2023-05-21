@@ -5,18 +5,35 @@ import {useRecoilState} from "recoil";
 import guildState from "@/atoms/guildAtom";
 import {fetchUserGuilds} from "@/utils/api";
 import isInVoiceChannelState from "@/atoms/isInVoiceChannelAtom";
+import isLoggedBotInvitedState from "@/atoms/isBotInvitedAtom";
 
 const ServerSelect = () => {
     const [guilds, setGuilds] = useState<Guild[]>([]);
     const [guild, setGuild] = useRecoilState(guildState);
+
     const [isInVoiceChannel, setIsInVoiceChannel] = useRecoilState(isInVoiceChannelState);
+    const [isLogged, setIsLogged] = useRecoilState(isInVoiceChannelState);
+    const [isBotInvited, setIsBotInvited] = useRecoilState(isLoggedBotInvitedState);
 
     useEffect(() => {
         fetchUserGuilds().then(data => {
-            if (data[0]) {
-                setGuild(data[0]);
-                setGuilds(data);
-                setIsInVoiceChannel(true)
+            // Nous sommes connecté
+            setIsLogged(true);
+            // Le bot est présent sur les serveurs
+            setIsBotInvited(true)
+
+            // Ajouter les serveurs à la listes
+            setGuild(data[0]);
+            setGuilds(data);
+        }).catch(response => {
+            // Si on n'est pas authentifié
+            if (response.status === 401) {
+                setIsLogged(false);
+            }
+
+            // Si le bot n'est présent sur aucun serveur de l'utilisateur
+            if (response.status === 404) {
+                setIsBotInvited(false);
             }
         })
     }, [])

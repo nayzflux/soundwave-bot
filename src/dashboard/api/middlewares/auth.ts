@@ -11,6 +11,8 @@ import {verifyToken} from "../index";
 export const isAuth = async (req, res, next) => {
     const token = req.cookies?.jwt;
 
+    console.log(token)
+
     // Si l'utilisateur n'a pas de token
     if (!token) return res.status(401).json({ message: "Authentification requise" });
 
@@ -22,16 +24,13 @@ export const isAuth = async (req, res, next) => {
     const self = await User.findOne({ id: decoded.id });
 
     // Vérifier si l'utilisateur n'a pas été supprimer
-    if (!self) return res.status(404).json({ message: "L'utilisateur n'existe pas" });
+    if (!self) return res.status(403).json({ message: "L'utilisateur n'existe pas" });
 
-    const discordUser = await getCurrentUser(self.credentials.access_token, self.id);
-
-    const mutuals = await getMutualGuilds(self.credentials.access_token, self.id);
+    //const discordUser = await getCurrentUser(self.credentials.access_token, self.id);
 
     // Stockage des informations d'authentification dans l'objet req pour les fonctions suivantes
     req.self = self;
-    req.discordUser = discordUser;
-    req.mutuals = mutuals;
+    //req.discordUser = discordUser;
 
     console.log(`Authentifié en tant que ${self.username}`);
     return next();

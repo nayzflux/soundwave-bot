@@ -9,8 +9,8 @@ export const fetchGuildQueue = async (guildId: string) => {
     try {
         const response = await axios.get(`${API_URL}/guilds/`+guildId+`/queue`, {withCredentials: true});
         return response;
-    } catch (e) {
-        return null;
+    } catch (error: any) {
+        throw error.response;
     }
 }
 
@@ -20,19 +20,19 @@ export const fetchUserGuilds = async () => {
     try {
         const response = await axios.get(`${API_URL}/guilds`, {withCredentials: true});
         return response?.data;
-    } catch (e) {
-        return null;
+    } catch (error: any) {
+        throw error.response;
     }
 }
 
-export const searchSongs = async (guildId: string, query: string): Promise<{inVoiceChannel: boolean, songs: SearchSong[]} | null> => {
+export const searchSongs = async (guildId: string, query: string): Promise<SearchSong[]> => {
     console.log(`Searching song...`)
 
     try {
         const response = await axios.get(`${API_URL}/guilds/` + guildId + `/search?q=` + query, {withCredentials: true});
         return response.data;
-    } catch (e) {
-        return null;
+    } catch (error: any) {
+        throw error.response;
     }
 }
 
@@ -42,7 +42,7 @@ export const fetchSpotifyPlaylists = async (): Promise<SpotifyPlaylist[] | null>
     try {
         const response = await axios.get(`${API_URL}/spotify/playlists`, {withCredentials: true});
         return response.data;
-    } catch (e) {
-        return null;
+    } catch (error: any) {
+        throw error.response;
     }
 }

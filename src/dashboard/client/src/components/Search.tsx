@@ -8,14 +8,22 @@ import {MagnifyingGlassIcon} from "@heroicons/react/24/outline";
 import {useRouter} from "next/navigation";
 import isInVoiceChannelState from "@/atoms/isInVoiceChannelAtom";
 import SpotifyPlaylistContainer from "@/components/SpotifyPlaylistContainer";
+import isLoggedBotInvitedState from "@/atoms/isBotInvitedAtom";
+import Unauthenticated from "@/components/errors/Unauthenticated";
+import InviteBot from "@/components/errors/InviteBot";
+import NotInVoiceChannel from "@/components/errors/NotInVoiceChannel";
+import isLoggedState from "@/atoms/isLogged";
 
 const Search = () => {
     const [loading, setLoading] = useState(false);
     const [input, setInput] = useState('');
     const [results, setResults] = useState([]);
     const [guild, setGuild] = useRecoilState(guildState);
-    const [isInVoiceChannel, setIsOnVoiceChannel] = useRecoilState(isInVoiceChannelState);
     const router = useRouter();
+
+    const [isInVoiceChannel, setIsInVoiceChannel] = useRecoilState(isInVoiceChannelState);
+    const [isLogged, setIsLogged] = useRecoilState(isLoggedState);
+    const [isBotInvited, setIsBotInvited] = useRecoilState(isLoggedBotInvitedState);
 
     useEffect(() => {
         debounceSearch(input, guild);
@@ -30,18 +38,22 @@ const Search = () => {
             }
 
             if (!guild?.id) {
-                setIsOnVoiceChannel(false);
                 return setResults([])
             }
 
             setLoading(true);
 
             searchSongs(guild.id, query).then(response => {
+                setIsInVoiceChannel(true);
                 // @ts-ignore
-                setIsOnVoiceChannel(response?.inVoiceChannel);
-                // @ts-ignore
-                setResults(response?.songs);
+                setResults(response);
                 setLoading(false)
+            }).catch(response => {
+                console.log(response.status)
+                // Si nous ne sommes pas dans un salon vocal du serveur
+                if (response.status === 400) {
+                    setIsInVoiceChannel(false);
+                }
             })
         }, 500), []
     );
@@ -53,22 +65,15 @@ const Search = () => {
                 <MagnifyingGlassIcon className="w-6 h-6"/>
                 <input className="bg-transparent outline-none" placeholder='Search a song...' value={input} onChange={(e) => setInput(e.target.value)} />
             </div>
-            {isInVoiceChannel ?
-                <div className={`flex flex-col text-white truncate space-y-2 w-full h-full p-6 ${isInVoiceChannel ? "" : "cursor-not-allowed"}`}>
-                    {results?.length >= 1 ? results?.map((item: SearchSong, index) => (
-                        <SearchSongItem key={`${index}-${item.name}`} name={item.name} authors={item.artists.map(artist => artist.name).toString()} url={item.external_urls.spotify} durationMs={item.duration_ms} coverUrl={item.album?.images[0].url} explicit={item.explicit}/>
-                    )) : <SpotifyPlaylistContainer/>}
-                </div> :
-                <div className="flex flex-grow justify-center items-center flex-col space-y-4 cursor-default">
-                    <p className="text-xl font-bold">You MUST be in VOICE channel to play music</p>
-
-                    <p className="text-lg text-center ">
-                        You are connected in a voice<br/>
-                        channel but this message appear?
-                    </p>
-
-                    <button className="hover:shadow-2xl bg-blue-600 hover:shadow-blue-500 px-3 py-2 rounded-lg font-semibold active:scale-95 transition-all ease-out duration-700" onClick={() => router.push((process.env.NEXT_PUBLIC_API_URL || 'https://api.soundwave.nayz.fr/api') + '/auth/login')}>Login With Discord</button>
-                </div>
+            {
+                !isLogged ? <Unauthenticated/> :
+                    !isBotInvited ? <InviteBot/> :
+                        !isInVoiceChannel ? <NotInVoiceChannel/> :
+                            <div className={`flex flex-col text-white truncate space-y-2 w-full h-full p-6 ${isInVoiceChannel ? "" : "cursor-not-allowed"}`}>
+                                {results?.length >= 1 ? results?.map((item: SearchSong, index) => (
+                                    <SearchSongItem key={`${index}-${item.name}`} name={item.name} authors={item.artists.map(artist => artist.name).toString()} url={item.external_urls.spotify} durationMs={item.duration_ms} coverUrl={item.album?.images[0].url} explicit={item.explicit}/>
+                                )) : <SpotifyPlaylistContainer/>}
+                            </div>
             }
         </div>
     );
