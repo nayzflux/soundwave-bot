@@ -6,13 +6,14 @@ import guildState from "@/atoms/guildAtom";
 import {fetchUserGuilds} from "@/utils/api";
 import isInVoiceChannelState from "@/atoms/isInVoiceChannelAtom";
 import isLoggedBotInvitedState from "@/atoms/isBotInvitedAtom";
+import isLoggedState from "@/atoms/isLogged";
 
 const ServerSelect = () => {
     const [guilds, setGuilds] = useState<Guild[]>([]);
     const [guild, setGuild] = useRecoilState(guildState);
 
     const [isInVoiceChannel, setIsInVoiceChannel] = useRecoilState(isInVoiceChannelState);
-    const [isLogged, setIsLogged] = useRecoilState(isInVoiceChannelState);
+    const [isLogged, setIsLogged] = useRecoilState(isLoggedState);
     const [isBotInvited, setIsBotInvited] = useRecoilState(isLoggedBotInvitedState);
 
     useEffect(() => {
