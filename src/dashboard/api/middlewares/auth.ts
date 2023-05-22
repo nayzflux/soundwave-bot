@@ -1,6 +1,7 @@
 import User from "../models/user";
 import {getCurrentUser, getCurrentUserConnections, getMutualGuilds} from "../utils/discord";
 import {verifyToken} from "../index";
+import sanitizeHtml from 'sanitize-html';
 
 /**
  * Gérer l'authentification
@@ -9,7 +10,7 @@ import {verifyToken} from "../index";
  * @param {} next
  */
 export const isAuth = async (req, res, next) => {
-    const token = req.cookies?.jwt;
+    const token = sanitizeHtml(req.cookies?.jwt);
 
     console.log(`Dashboard API - Authentication...`);
 

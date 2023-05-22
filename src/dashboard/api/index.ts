@@ -20,11 +20,10 @@ import cookieParser from 'cookie-parser'
 import {getVoiceChannel} from "../../index";
 import {getCurrentSpotifyUserPlaylists, getSpotifyCredentials, SpotifyCredentials} from "./utils/spotify";
 import {resolveMutualGuilds} from "./middlewares/guild";
+import sanitizeHtml from 'sanitize-html';
 
 import rateLimit from 'express-rate-limit'
 import helmet from "helmet";
-
-
 
 const app = express();
 
@@ -38,11 +37,10 @@ const limiter = rateLimit({
     message: "You are being rate limited retry in 15 minutes",
 })
 
+app.set('trust proxy', 1)
+
 // Use Helmet!
 app.use(helmet());
-
-app.set('trust proxy', 1)
-app.get('/ip', (request, response) => response.send(request.ip))
 
 app.use(limiter)
 
@@ -52,13 +50,15 @@ app.use(cookieParser())
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({extended: true}));
 
+app.get('/ip', (request, response) => response.send(request.ip))
+
 app.get('/api/spotify/login', isAuth, (req, res) => {
     console.log("Dashboard API - Redirect to Spotify oauth url");
     res.redirect(process.env.SPOTIFY_OAUTH_URL);
 });
 
 app.get('/api/spotify/callback', isAuth, async (req, res) => {
-    const { code } = req.query;
+    const code = sanitizeHtml(req.query?.code);
     // @ts-ignore
     const self = req.self;
 
@@ -93,7 +93,7 @@ app.get('/api/auth/login', (req, res) => {
 
 
 app.get('/api/auth/callback', async (req, res) => {
-    const { code } = req.query;
+    const code = sanitizeHtml(req.query?.code);
 
     console.log("Dashboard API - Discord code granted");
 
@@ -164,16 +164,18 @@ app.get('/api/guilds', isAuth, resolveMutualGuilds, async (req, res) => {
 });
 
 // Get Guild queue
-app.get('/api/guilds/:guild_id/queue', isAuth, resolveMutualGuilds, async (req, res) => {
-    const { guild_id } = req.params;
+app.get('/api/guilds/:guildId/queue', isAuth, resolveMutualGuilds, async (req, res) => {
+    const guildId = sanitizeHtml(req.params?.guildId);
+
+    if (!guildId) return res.status(400).json({ message: "Error" });
 
     // @ts-ignore
     const self = req.self;
     // @ts-ignore
     const mutuals = req.mutuals;
-    if (!mutuals.map(g => g.id).includes(guild_id)) return res.status(403).json({ message: "Not allowed : You're not on this server" });
+    if (!mutuals.map(g => g.id).includes(guildId)) return res.status(403).json({ message: "Not allowed : You're not on this server" });
 
-    if (!isPlaying(guild_id)) {
+    if (!isPlaying(guildId)) {
         res.status(400).json({ message: "Currently not playing" });
         return;
     }
@@ -181,7 +183,7 @@ app.get('/api/guilds/:guild_id/queue', isAuth, resolveMutualGuilds, async (req, 
     /**
      * BESOIN DE CHANGER LE SYSTEME QUE FILE D'ATTENTE
      */
-    const queue = getQueue(guild_id);
+    const queue = getQueue(guildId);
 
     res.status(200).json({songs: queue.songs, isPlaying: queue.isPlaying});
     return;
@@ -189,8 +191,11 @@ app.get('/api/guilds/:guild_id/queue', isAuth, resolveMutualGuilds, async (req, 
 
 // Search song
 app.get('/api/guilds/:guildId/search', isAuth, resolveMutualGuilds, async (req, res) => {
-    const { q } = req.query;
-    const {guildId} = req.params;
+    const q = sanitizeHtml(req.query?.q);
+    const guildId = sanitizeHtml(req.params?.guildId);
+
+    if (!guildId) return res.status(400).json({ message: "Error" });
+    if (!q) return res.status(400).json({ message: "Error" });
 
     // @ts-ignore
     const self = req.self;

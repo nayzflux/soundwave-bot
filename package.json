@@ -43,6 +43,7 @@
     "libsodium-wrappers": "^0.7.11",
     "mongoose": "^7.0.4",
     "node-cmd": "^5.0.0",
+    "sanitize-html": "^2.10.0",
     "socket.io": "^4.6.1",
     "spotifydl-core": "^0.2.0",
     "yt-search": "^2.10.4"
