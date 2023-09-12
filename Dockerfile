@@ -11,6 +11,7 @@ RUN npm install -g npm@latest
 
 # Installer les modules
 RUN npm install
+RUN npm install ytdl-core@latest
 
 # compiler le typescript
 RUN npm install typescript
